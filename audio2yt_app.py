@@ -39,6 +39,8 @@ import openai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+import shutil
+import whisper
 
 # Load environment variables from .env file
 load_dotenv()
@@ -89,33 +91,27 @@ def ensure_ffmpeg() -> None:
         st.stop()
 
 
-@st.cache_data(show_spinner="Transcribing …")
-def transcribe_with_ollama(wav_path: Path) -> str:
+def is_ollama_available() -> bool:
     """
-    Transcribe audio using the Ollama Whisper model.
+    Check if the 'ollama' command is available in the system PATH.
+    Returns:
+        bool: True if ollama is available, False otherwise.
+    """
+    return shutil.which("ollama") is not None
+
+
+@st.cache_data(show_spinner="Transcribing …")
+def transcribe_with_local_whisper(wav_path: Path) -> str:
+    """
+    Transcribe audio using local OpenAI Whisper model.
     Args:
         wav_path (Path): Path to the .wav file to transcribe.
     Returns:
         str: The transcribed text.
-    Raises:
-        RuntimeError: If the transcription process fails.
     """
-    cmd = [
-        "ollama",
-        "run",
-        OLLAMA_MODEL,
-        "-f",
-        str(wav_path),
-    ]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr)
-    return result.stdout.strip()
+    model = whisper.load_model("base")  # or "small", "medium", "large"
+    result = model.transcribe(str(wav_path))
+    return result["text"].strip()
 
 
 @st.cache_data(show_spinner="Generating thumbnails …")
@@ -129,19 +125,18 @@ def generate_thumbnails(prompt: str, count: int = 3, size: str = "1024x1024"):
     Returns:
         list[Path]: List of paths to generated images.
     """
-    rsp = openai.images.generate(
-        prompt=prompt,
-        model="dall-e-3",
-        n=count,
-        size=size,
-        response_format="b64_json",
-    )
     imgs = []
-    for idx, d in enumerate(rsp.data):
-        # openai.util.tofile is not a public API; use base64 decode instead
+    for i in range(count):
+        rsp = openai.images.generate(
+            prompt=prompt,
+            model="dall-e-3",
+            n=1,
+            size=size,
+            response_format="b64_json",
+        )
         import base64
-        img_bytes = base64.b64decode(d.b64_json)
-        img_path = TMP_ROOT / f"thumb_{int(time.time())}_{idx}.png"
+        img_bytes = base64.b64decode(rsp.data[0].b64_json)
+        img_path = TMP_ROOT / f"thumb_{int(time.time())}_{i}.png"
         img_path.write_bytes(img_bytes)
         imgs.append(img_path)
     return imgs
@@ -215,6 +210,19 @@ def youtube_uploader(mp4: Path, title: str, desc: str) -> str:
     )
     return request.execute()["id"]
 
+
+def generate_image_prompt(transcript: str) -> str:
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are an assistant that creates concise, vivid prompts for DALL-E image generation based on podcast transcripts."},
+            {"role": "user", "content": f"Create a vivid, visual prompt for DALL-E based on this transcript: {transcript}"}
+        ],
+        max_tokens=60,
+        temperature=0.8,
+    )
+    return response.choices[0].message.content.strip()
+
 # ---------- UI --------------------------------------------------------------
 
 
@@ -233,24 +241,42 @@ if uploaded:
     st.success(f"Saved {orig_path.name}")
 
     # Step 1  —  Transcription
-    try:
-        transcript = transcribe_with_ollama(orig_path)
+    if 'transcription_error' not in st.session_state:
+        st.session_state['transcription_error'] = None
+    if 'transcript' not in st.session_state:
+        st.session_state['transcript'] = None
+
+    def do_transcription():
+        try:
+            transcript = transcribe_with_local_whisper(orig_path)
+            st.session_state['transcript'] = transcript
+            st.session_state['transcription_error'] = None
+        except Exception as e:
+            st.session_state['transcription_error'] = str(e)
+            st.session_state['transcript'] = None
+
+    if st.session_state['transcript'] is None and st.session_state['transcription_error'] is None:
+        do_transcription()
+
+    if st.session_state['transcript']:
         st.text_area(
-            "Transcript (editable before upload)", value=transcript, key="tx"
+            "Transcript (editable before upload)", value=st.session_state['transcript'], key="tx"
         )
-    except Exception as e:
-        st.error(f"Transcription failed: {e}")
+    else:
+        st.error(f"Transcription failed: {st.session_state['transcription_error']}")
+        if st.button("Retry Transcription"):
+            do_transcription()
         st.stop()
 
     # Step 2  —  Thumbnails
-    thumbs = generate_thumbnails(prompt=transcript[:200])
+    thumbs = generate_thumbnails(prompt=st.session_state['transcript'][:200])
     cols = st.columns(len(thumbs))
     chosen_idx = 0
     for i, (col, img_path) in enumerate(zip(cols, thumbs)):
         with col:
             if st.radio(label="", options=["Use this"], key=f"thumb_{i}"):
                 chosen_idx = i
-            st.image(str(img_path), use_column_width=True)
+            st.image(str(img_path), use_container_width=True)
     chosen_thumb = thumbs[chosen_idx]
 
     # Step 3  —  Build video
