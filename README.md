@@ -124,3 +124,9 @@ MIT License. See [LICENSE](LICENSE).
 ---
 
 **Happy automating!**
+
+---
+
+## Connect
+
+Follow me on X (Twitter): [@joedefendre](https://x.com/joedefendre)
