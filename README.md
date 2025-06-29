@@ -7,7 +7,7 @@ A Streamlit-powered tool to turn your audio clips into YouTube-ready videos—fu
 **Notebook-LM Audio2YouTube** lets you:
 
 - Upload a `.wav` audio file
-- Transcribe it locally using Ollama (Whisper-large-v3 by default)
+- Transcribe it locally using OpenAI Whisper (runs on your machine, no file size limits)
 - Generate 3 AI thumbnails with OpenAI DALL-E
 - Pick your favorite thumbnail
 - Build an MP4 video with FFmpeg
@@ -19,7 +19,7 @@ All in a clean, interactive web UI. Perfect for podcasters, educators, and anyon
 
 ## Features
 
-- **Local transcription** (Ollama Whisper)
+- **Local transcription** (OpenAI Whisper, no API or file size limits)
 - **AI thumbnail generation** (OpenAI DALL-E)
 - **MP4 video rendering** (FFmpeg)
 - **YouTube upload** (YouTube Data API v3)
@@ -34,9 +34,9 @@ All in a clean, interactive web UI. Perfect for podcasters, educators, and anyon
 ### 1. Prerequisites
 
 - Python 3.9+
-- [Ollama](https://ollama.com/) (for Whisper transcription)
+- [OpenAI Whisper](https://github.com/openai/whisper) (installed via pip)
 - [FFmpeg](https://ffmpeg.org/) (install via Homebrew or your package manager)
-- [OpenAI API key](https://platform.openai.com/account/api-keys)
+- [OpenAI API key](https://platform.openai.com/account/api-keys) (for DALL-E thumbnails)
 - YouTube Data API OAuth token (see below)
 
 ### 2. Install dependencies
@@ -80,7 +80,7 @@ streamlit run audio2yt_app.py
 
 - **Python**
 - **Streamlit** (UI)
-- **Ollama Whisper** (transcription)
+- **OpenAI Whisper** (local transcription)
 - **OpenAI DALL-E** (thumbnails)
 - **FFmpeg** (video rendering)
 - **YouTube Data API v3** (upload)

@@ -7,7 +7,7 @@ Welcome! This guide will help you set up and run the project for the first time.
 ## Prerequisites
 
 - **Python 3.9+**
-- **[Ollama](https://ollama.com/)** (for Whisper transcription)
+- **[OpenAI Whisper](https://github.com/openai/whisper)** (installed via pip, for local transcription)
 - **[FFmpeg](https://ffmpeg.org/)** (install via Homebrew or your package manager)
 - **OpenAI API key** ([get one here](https://platform.openai.com/account/api-keys))
 - **Google API key** (from Google Cloud Console)
@@ -71,7 +71,7 @@ streamlit run audio2yt_app.py
 ## 7. Using the App
 
 1. Drop a `.wav` file in the uploader.
-2. Wait for transcription (editable in the UI).
+2. Wait for transcription (editable in the UI, powered by local Whisper).
 3. Pick your favorite AI-generated thumbnail.
 4. Render the MP4 video.
 5. Preview and upload to YouTube—all from the browser!
