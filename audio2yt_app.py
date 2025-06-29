@@ -38,15 +38,17 @@ import streamlit as st
 import openai
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
 
-# ---------- CONFIG ------------------------------------------------------------
+# Load environment variables from .env file
+load_dotenv()
+
+# ---------- CONFIG ---------------------------------------------------------
 # Model and tool configuration
 OLLAMA_MODEL = (
     "ZimaBlueAI/whisper-large-v3"
 )  # Whisper model for transcription
-FFMPEG_BIN = (
-    "/opt/homebrew/bin/ffmpeg"
-)  # Path to FFmpeg binary
+FFMPEG_BIN = "/usr/local/bin/ffmpeg"  # Path to FFmpeg binary
 YT_TOKEN_FILE = Path.home() / ".config/youtube_token.json"  # YouTube OAuth token
 TMP_ROOT = (
     Path(tempfile.gettempdir())
@@ -60,7 +62,10 @@ if not openai.api_key:
     st.error("OPENAI_API_KEY not set in your environment")
     st.stop()
 
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
 # ---------- HELPERS -----------------------------------------------------------
+
 
 def say(msg: str) -> None:
     """
@@ -210,7 +215,8 @@ def youtube_uploader(mp4: Path, title: str, desc: str) -> str:
     )
     return request.execute()["id"]
 
-# ---------- UI ----------------------------------------------------------------
+# ---------- UI --------------------------------------------------------------
+
 
 st.set_page_config(page_title="Notebook-LM to YouTube", layout="centered")
 st.title("🎙️ → 📺  Notebook-LM Clip Uploader")
