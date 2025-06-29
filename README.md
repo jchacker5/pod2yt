@@ -21,7 +21,7 @@ All in a clean, interactive web UI. Perfect for podcasters, educators, and anyon
 
 - **Local transcription** (OpenAI Whisper, no API or file size limits)
 - **AI thumbnail generation** (OpenAI DALL-E)
-- **MP4 video rendering** (FFmpeg)
+- **MP4 video rendering** (FFmpeg, auto-saves to project directory)
 - **YouTube upload** (YouTube Data API v3)
 - **Editable transcript** before upload
 - **Modern UI** (Streamlit, responsive, mobile-friendly)
@@ -69,9 +69,9 @@ streamlit run audio2yt_app.py
 ## Usage
 
 1. Drop a `.wav` file in the uploader.
-2. Wait for transcription (editable in the UI).
+2. Wait for transcription (editable in the UI, powered by local Whisper).
 3. Pick your favorite AI-generated thumbnail.
-4. Render the MP4 video.
+4. Render the MP4 video (auto-saved to your project directory with the same name as your audio file).
 5. Preview and upload to YouTube—all from the browser!
 
 ---

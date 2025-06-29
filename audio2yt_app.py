@@ -281,7 +281,8 @@ if uploaded:
 
     # Step 3  —  Build video
     if st.button("🔧 Render MP4"):
-        mp4_path = TMP_ROOT / f"{orig_path.stem}.mp4"
+        # Save the video in the project directory with the same stem as the audio
+        mp4_path = Path.cwd() / f"{orig_path.stem}.mp4"
         try:
             with st.status("Rendering video …", expanded=True) as status:
                 build_video(orig_path, chosen_thumb, mp4_path)
@@ -291,6 +292,7 @@ if uploaded:
             st.stop()
 
         st.video(str(mp4_path))
+        st.success(f"Video saved to: {mp4_path}")
 
         # Step 4  —  Upload
         if st.button("⬆️ Upload to YouTube"):
